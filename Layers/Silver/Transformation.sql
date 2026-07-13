@@ -17,11 +17,10 @@ Usage Example:
     EXEC Silver.load_silver;
 ===============================================================================
 */
-
+use DataWarehouse
 --Standerdizing crm.cust_info table and loading it into silver layer 
 print '-------------------------------------'
 print '>>>> Truncating Table silver.crm_cust_info <<<<'
-print '-------------------------------------'
 Truncate Table silver.crm_cust_info
 
 PRINT '>> Inserting Data Into: silver.crm_cust_info';
@@ -63,7 +62,6 @@ where flag_last = 1
 
 print '-------------------------------------'
 print '>>>> Truncating Table Silver.crm_prd_info <<<<'
-print '-------------------------------------'
 Truncate Table Silver.crm_prd_info
 
 PRINT '>> Inserting Data Into: Silver.crm_prd_info';
@@ -94,3 +92,42 @@ end as prd_line,
     DATEADD(Day, -1, lead(prd_start_date) Over(PARTITION BY prd_key Order by prd_start_date))  as prd_end_date
 from bronze.crm_prd_info
 
+
+----Standerdizing the crm_sales_details table and loading it into silver layer 
+
+print '-------------------------------------'
+print '>>>> Truncating Table Silver.crm_sales_details <<<<'
+Truncate Table Silver.crm_sales_details
+
+PRINT '>> Inserting Data Into: Silver.crm_sales_details';
+insert into Silver.crm_sales_details
+(sls_ord_num, sls_prd_key, sls_cust_id, sls_order_dt,
+    sls_ship_dt, sls_due_dt, sls_sales, sls_quantity, sls_price)
+select 
+    sls_ord_num,
+    sls_prd_key,
+    sls_cust_id,
+Case 
+    when sls_order_dt = 0 or Len(sls_order_dt)!=8 then Null
+    else cast(cast(sls_order_dt as varchar) as Date) 
+END as sls_order_dt,
+Case 
+    when sls_ship_dt = 0 or Len(sls_ship_dt)!=8 then Null
+    else cast(cast(sls_ship_dt as varchar) as Date) 
+END as sls_ship_dt,
+Case 
+    when sls_due_dt = 0 or Len(sls_due_dt)!=8 then Null
+    else cast(cast(sls_due_dt as varchar) as Date) 
+END as sls_due_dt,
+Case 
+    when sls_sales is NULL or sls_sales <0 or sls_sales != sls_quantity * ABS(sls_price) 
+    then sls_quantity * ABS(sls_price) 
+    else sls_sales
+end as sls_sales,
+    sls_quantity,
+case 
+    when sls_price is Null or sls_price <= 0
+    then sls_sales / Nullif(sls_quantity, 0)
+    else  sls_price
+end as sls_price
+from Bronze.crm_sales_details
