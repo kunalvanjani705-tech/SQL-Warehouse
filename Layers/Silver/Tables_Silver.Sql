@@ -16,14 +16,15 @@ if OBJECT_ID('silver.crm_prd_info', 'U') is Not Null
     drop Table silver.crm_prd_info
 
 create table silver.crm_prd_info(
-    prd_id int,
-    prd_key nvarchar(50),
-    prd_name nvarchar(50),
-    prd_cost int,
-    prd_line nvarchar(50),
-    prd_start_date date,
-    prd_end_date date,
-    dwh_creation_date DATETIME2 Default getdate()
+    prd_id      int,
+    cat_id      NVARCHAR(50),
+    prd_key     nvarchar(50),
+    prd_name    nvarchar(50),
+    prd_cost    int,
+    prd_line    nvarchar(50),
+    prd_start_date  date,
+    prd_end_date    date,
+    dwh_creation_date  DATETIME2 Default getdate()
 );
 
 if OBJECT_ID('silver.crm_sales_details', 'U') is Not Null
